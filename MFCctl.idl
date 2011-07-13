@@ -1,0 +1,52 @@
+// MFCctl.idl : type library source for ActiveX Control project.
+
+// This file will be processed by the MIDL compiler tool to
+// produce the type library (MFCctl.tlb) that will become a resource in
+// MFCctl.ocx.
+
+#include <olectl.h>
+#include <idispids.h>
+
+[ uuid(43083F07-2A3A-42BB-86F9-02A5D8BA3A85), version(1.0),
+  helpfile("MFCctl.hlp"),
+  helpstring("MFCctl ActiveX Control module"),
+  control ]
+library MFCctlLib
+{
+	importlib(STDOLE_TLB);
+
+	//  Primary dispatch interface for CMFCctlCtrl
+
+	[ uuid(49CCFFE8-AF0A-46A8-B02E-A80585551900),
+	  helpstring("Dispatch interface for MFCctl Control")]
+	dispinterface _DMFCctl
+	{
+		properties:
+		methods:
+		    [id(1), helpstring("method FocusControl")] void FocusControl(VARIANT_BOOL bLast);
+	};
+
+	//  Event dispatch interface for CMFCctlCtrl
+
+	[ uuid(E44D1F07-9EF4-4538-8BAC-D0E918E22F84),
+	  helpstring("Event interface for MFCctl Control") ]
+	dispinterface _DMFCctlEvents
+	{
+		properties:
+			//  Event interface has no properties
+
+		methods:
+		    [id(1)] void Tabout(VARIANT_BOOL bShifted);
+	};
+
+	//  Class information for CMFCctlCtrl
+
+	[ uuid(5D541275-D9E1-42C4-BED1-A060316B7695),
+	  helpstring("MFCctl Control"), control ]
+	coclass MFCctl
+	{
+		[default] dispinterface _DMFCctl;
+		[default, source] dispinterface _DMFCctlEvents;
+	};
+
+};

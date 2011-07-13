@@ -1,0 +1,91 @@
+main  testtab
+.include "WND:tools.def"
+.align
+stack record
+	ctrid		,D_NATINT	;Container ID
+	bldid		,D_NATINT	;Input window build ID
+	inpid		,D_NATINT	;Input window ID
+	axid		,D_NATINT	;ActiveX control window ID
+	data		,a100
+	
+proc
+	u_start
+	ctrid = c_container(DC_CREATE, "", 20, 78)
+	ib_input(bldid, "", 2, 40)
+	ib_field(bldid, "f1", D_FLD_SIZE, 10, D_FLD_PROMPT, "An input field ")
+	ib_end(bldid, inpid)
+	c_container(DC_ADD, ctrid, DC_WINDOW, inpid, 1, 1, 1)
+	i_frames(inpid)
+
+        ;The next call creates the ActiveX window and binds extension routines
+        ; routines that have the prefix mfcctl_ to the automatically 
+        ; registered event method set. This instructs Toolkit to use the 
+        ; mfcctl_tabout method below for the Tabout event.	
+	axid = ax_tksingle("", 10, 40, "MFCCTL.MFCctlCtrl.1", "MFCCtl.ocx",, "mfcctl_")
+	c_container(DC_ADD, ctrid, DC_WINDOW, axid, 3, 1,, "mfcctl_process")
+	ib_input(bldid, "", 2, 40)
+	ib_field(bldid, "f1", D_FLD_SIZE, 10, D_FLD_PROMPT, "Another input field ")
+	ib_end(bldid, inpid)
+	
+        ;The next call adds the ActiveX window to a composite container
+        ; window. The final argument instructs the composite window 
+        ; processing routine (C_PROCESS) to call mfcctl_process function 
+        ; (declared below) to process the ActiveX window.	
+	c_container(DC_ADD, ctrid, DC_WINDOW, inpid, 13, 1, 1)
+	i_frames(inpid)
+	u_window(D_PLACE, ctrid, 1, 1)
+	c_process(ctrid, data)
+	u_finish
+end
+
+function mfcctl_process	,^val
+;
+; Description:  Method that processes the ActiveX control. This 
+;               method uses the reason argument that is passed by 
+;               C_PROCESS to determine which edit control should 
+;               have focus. (See "The Composite Window Processing
+;               Methods" in the "Composite Window Routines" chapter
+;               of the UI Toolkit Reference Manual.) It also 
+;               informs the runtime (by calling ax_wantskey) that 
+;               the ActiveX control will process TAB and SHIFT+TAB.
+; Arguments:
+;
+	a_ctrid		,D_NATINT	;Id of the container
+	
+	a_type		,D_NATINT	;DC_WINDOW in this case
+	
+	a_axid		,D_NATINT	;ID of the ActiveX window
+	
+	a_reason	,a		;Reason for focus
+	
+.include "WND:inpctl.def"
+	
+proc
+	using (a_reason) select
+	("C_FIRST ", "C_NEXT "), ax_tkcall(a_axid, "FocusControl", FALSE)
+	("C_LAST ", "C_PREV "),	 ax_tkcall(a_axid, "FocusControl", TRUE)
+	endusing
+	ax_wantskey(a_axid, F57_KEY, D_MAP_CONTROL, CTRL_I_KEY, D_MAP_CONTROL)
+	ax_input(a_axid)
+	freturn TRUE
+end
+
+function mfcctl_tabout	,^val
+;
+; Description:  Event handler for the control's custom Tabout event.
+;               This is called whenever TAB or SHIFT+TAB tabs off
+;               either end of the control's own internal tabbing 
+;               order. 
+; Arguments:
+;
+	a_ctlid		,D_NATINT	;ActiveX control ID
+	
+	a_shifted	,D_NATINT	;Was the shift key down?
+;
+proc
+	if (a_shifted) then 
+	  m_signal("C_PREV")
+	else
+	  m_signal("C_NEXT")
+	freturn TRUE
+end
